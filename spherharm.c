@@ -6,14 +6,20 @@
 #include <stdlib.h>
 
 #define PI 3.14159265
-double YLMDsmallr[20][20][2] = {0};
-double YLMDbigr[20][20][2] = {0};
-double YLMAbigr[20][20][2] = {0};
+
+double complex YLMDsmallrpos[20][20] = {0};
+double complex YLMDbigrpos[20][20] = {0};
+double complex YLMAbigrpos[20][20] = {0};
+double complex YLMDsmallrneg[20][20] = {0};
+double complex YLMDbigrneg[20][20] = {0};
+double complex YLMAbigrneg[20][20] = {0};
 double epsilon = 80;
 double radius = 4;
 double depth = 10;
+double smallr = 2;
+double Dsmallr, Dbigr, Abigr=0;
 void projectontoYLM();
-double Abigr(double, double, double, double);
+void imagecharges(double, double, double, double);
 
 int main(){
   double x = 5.0;
@@ -32,10 +38,12 @@ void projectontoYLM(){
   double plmplm=0;
   double complex exponentials=0;
   double complex ylmylm=0;
+  double complex value=0;
   double h=0;
   int i,j,k,l,m,n=0;
   h = pow(PI, 4)*4/(Ntheta*Ntheta*Nphi*Nphi);
-  for(l=0; l<=5-1; l++){
+  printf("%f\n", h);
+  for(l=0; l<=4-1; l++){
     for(m=0; m<=l; m++){
       for(i=0; i<=Ntheta-1; i++){
 	printf("%d\n", i);
@@ -49,34 +57,72 @@ void projectontoYLM(){
 	      plmplm = sin(theta)*sin(thetap)*gsl_sf_legendre_sphPlm(l, m, cos(theta))*gsl_sf_legendre_sphPlm(l, m, cos(thetap));
 	      exponentials = cexp(-I*phi*m)*cexp(I*phip*m);
 	      ylmylm = plmplm*exponentials;
-	      YLMAbigr[l][m][0] += ylmylm*Abigr(theta, phi, thetap, phip);
-	      YLMDbigr[l][m][0] += ylmylm*Dbigr(theta, phi, thetap, phip);
-	      YLMDsmallr[l][m][0] += ylmylm*Dsmallr(theta, phi, thetap, phip);
+	      imagecharges(theta, phi, thetap, phip);
+	      YLMAbigrpos[l][m] += ylmylm*Abigr;
+	      YLMDbigrpos[l][m] += ylmylm*Dbigr;
+	      YLMDsmallrpos[l][m] += ylmylm*Dsmallr;
 	      plmplm = plmplm*pow(gsl_sf_fact(l-m), 2)/pow(gsl_sf_fact(l+m), 2);
-	      exponentials = cexp(I*phi*m)*cexp(-I*phip*m);
+	      exponentials = conj(exponentials);
 	      ylmylm = plmplm*exponentials;
-	      YLMAbigr[l][m][1] += ylmylm*Abigr(theta, phi, thetap, phip);
-	      YLMDbigr[l][m][1] += ylmylm*Dbigr(theta, phi, thetap, phip);
-	      YLMDsmallr[l][m][1] += ylmylm*Dsmallr(theta, phi, thetap, phip);
+	      YLMAbigrneg[l][m] += ylmylm*Abigr;
+	      YLMDbigrneg[l][m] += ylmylm*Dbigr;
+	      YLMDsmallrneg[l][m] += ylmylm*Dsmallr;
 	    }
 	  }
 	}
       }
-      YLMAbigr[l][m][0] = YLMAbigr[l][m][0]*h;
-      YLMAbigr[l][m][1] = YLMAbigr[l][m][1]*h;
-      YLMDbigr[l][m][0] = YLMDbigr[l][m][0]*h;
-      YLMDbigr[l][m][1] = YLMDbigr[l][m][1]*h;
-      YLMDsmallr[l][m][0] = YLMDsmallr[l][m][0]*h;
-      YLMDsmallr[l][m][1] = YLMDsmallr[l][m][1]*h;
+      YLMAbigrpos[l][m] = YLMAbigrpos[l][m]*h;
+      YLMAbigrneg[l][m] = YLMAbigrneg[l][m]*h;
+      YLMDbigrpos[l][m] = YLMDbigrpos[l][m]*h;
+      YLMDbigrneg[l][m] = YLMDbigrneg[l][m]*h;
+      YLMDsmallrpos[l][m] = YLMDsmallrpos[l][m]*h;
+      YLMDsmallrneg[l][m] = YLMDsmallrneg[l][m]*h;
     }
   }
-  printf("%f %f\n", YLMAbigr[0][0], h);
+
+  printf("%f %f\n", cimag(YLMAbigrpos[3][0]), h);
 }
 
-
+/*
 double Abigr(double theta, double phi, double thetap, double phip){
   double result=0;
   result = pow(cos(phi)*sin(theta) - cos(phip)*sin(thetap), 2) + pow(sin(phi)*sin(theta)-sin(phip)*sin(thetap), 2) + pow(cos(theta) + cos(thetap)-2*depth/radius, 2);
   result = (epsilon-1)/(sqrt(result)*radius*(epsilon+1));
   return result;
+}
+*/
+/*
+double Dbigr(double theta, double phi, double thetap, double phip){
+  double result=0;
+  result = pow(cos(phi)*sin(theta) - cos(phip)*sin(thetap), 2) + pow(sin(phi)*sin(theta)-sin(phip)*sin(thetap), 2) + pow(cos(theta) + cos(thetap)-2*depth/radius, 2);
+  result = (epsilon-1)/(sqrt(result)*radius*(epsilon+1));
+  return result;
+}
+*/
+void imagecharges(double theta, double phi, double thetap, double phip){ 
+  double result=0;
+  double inverser1, inverser2=0;
+  double cost, costp, cosp, cospp=0;
+  double sint, sintp, sinp, sinpp=0;
+  double numerator=0;
+  cost=cos(theta);
+  cosp=cos(phi);
+  costp=cos(thetap);
+  cospp=cos(phip);
+  sint=sin(theta);
+  sinp=sin(phi);
+  sintp=sin(thetap);
+  sinpp=sin(phip);
+
+  inverser1 = pow(cosp*sint - cospp*sintp, 2) + pow(sinp*sint-sinpp*sintp, 2) + pow(cost + costp - 2*depth/radius, 2);
+  inverser1 = 1/(sqrt(inverser1)*radius);
+  Abigr = inverser1*(epsilon-1)/(epsilon+1);
+
+  inverser2 = (pow(smallr*cosp*sint - radius*cospp*sintp, 2) + pow(smallr*sinp*sint - radius*sinpp*sintp,2) + pow(smallr*cost-radius*costp-2*depth,2));
+  inverser2 = 1/sqrt(inverser2);
+  numerator = (smallr*cosp*sint-radius*cospp*sintp)*cospp*sintp + (radius*sinp*sint-radius*sinpp*sintp)*sinpp*sintp - (smallr*cost+radius*costp-2*depth)*costp;
+  Dsmallr = numerator*pow(inverser2, 3)*(epsilon-1)/(epsilon+1);
+
+  numerator = -radius*(cosp*sint - cospp*sintp)*cosp*sint - radius*(sinp*sint - sinpp*sintp)*sinp*sint - (radius*cost + radius*costp - 2*depth)*cost;
+  Dbigr = numerator*pow(inverser1, 3)*(epsilon-1)/(epsilon+1);
 }
