@@ -25,7 +25,7 @@ double radius = 4;
 double depth = 10;
 double smallr = 2;
 double smallrp = 2;
-int lmax=2;
+int lmax=1;
 double Dsmallr, Dbigr, Abigr=0;
 double Dsmallrp, Asmallrp=0;  //Dsmallrp involves r-prime, and the small r is also the first argument of the image charge
 
@@ -43,8 +43,8 @@ int main(){
 
 void projectontoYLM(){
   //at the moment this is just using the rectangle method (I'm pathetic, I know)
-  int Ntheta=20;
-  int Nphi=40;
+  int Ntheta=30;
+  int Nphi=60;
   double theta, thetap, phi, phip=0;
   double plmplm=0;
   double complex exponentials=0;
@@ -57,7 +57,6 @@ void projectontoYLM(){
   for(l=0; l<=lmax; l++){
     for(m=0; m<=l; m++){
       for(i=0; i<=Ntheta-1; i++){
-	printf("%d\n", i);
 	theta = i*(PI)/Ntheta;
 	for(j=0; j<=Nphi-1; j++){
 	  phi = j*(2*PI)/Nphi;
@@ -100,7 +99,7 @@ void projectontoYLM(){
     }
   }
 
-  printf("%f %f\n", cimag(YLMAbigrpos[3][0]), h);
+  printf("%f %f\n", creal(YLMAbigrpos[0][0]), h);
 }
 
 void calculateFLM(){
@@ -119,15 +118,17 @@ void calculateFLM(){
     lp21 = 2*l+1;
     for(m=0; m<=l; m++){
       numerator = (pow(eps-1, 3)/(p4*eps))*((pow(smallr/radius, l)*p4*(l+1)/(lp21))*(-p4/(radius*(lp21)) - YLMAbigrpos[l][m]) + radius*YLMDsmallrpos[l][m]*(p4/(lp21) + radius*YLMAbigrpos[l][m]));
+      printf("num1 %f\n", creal(numerator));
       denominator = (eps-(eps-1))*(pow(radius, 2)*YLMDsmallrpos[l][m]-p4*(l+1)/(lp21));
       numerator = numerator*((-p4*(l+1)/(lp21))*pow(smallrp/radius, l) + pow(radius, 2)*YLMDsmallrppos[l][m]);
-
+      printf("num2 %f\n", creal(numerator));
       FLMpos[l][m] = numerator/denominator;
+      printf("1 %d %d %f %f %f %f\n", l, m, creal(FLMpos[l][m]), cimag(FLMpos[l][m]), creal(numerator), creal(denominator));
       numerator = (pow(eps-1, 2)/(p4*eps))*(-pow(smallrp/radius, l)*pow(smallr, l)*pow(radius,-(l+1))*pow(p4/lp21, 2)*(l+1));
       numerator +=  (pow(eps-1, 2)/(p4*eps))*pow(smallrp, l)*pow(radius, -l+1)*YLMDsmallrpos[l][m]*p4/lp21;
       numerator += (pow(eps-1, 2)/(p4*eps))*pow(radius, 2)* YLMAsmallrppos[l][m]*YLMDsmallrpos[l][m];
       FLMpos[l][m] += numerator;
-
+      printf("2 %d %d %f %f\n", l, m, creal(FLMpos[l][m]), cimag(FLMpos[l][m]));
       numerator = (pow(eps-1, 3)/(p4*eps))*((pow(smallr/radius, l)*p4*(l+1)/(lp21))*(-p4/(radius*(lp21)) - YLMAbigrneg[l][m]) + radius*YLMDsmallrneg[l][m]*(p4/(lp21) + radius*YLMAbigrneg[l][m]));
       denominator = (eps-(eps-1))*(pow(radius, 2)*YLMDsmallrneg[l][m]-p4*(l+1)/(lp21));
       numerator = numerator*((-p4*(l+1)/(lp21))*pow(smallrp/radius, l) + pow(radius, 2)*YLMDsmallrpneg[l][m]);
@@ -146,15 +147,19 @@ void calculateFLM(){
     exponentials = cexp(I*0*m)*cexp(-I*0*m);
     ylmylm = exponentials*plmplm;
     ffunction[0][0] += FLMpos[l][0]*ylmylm;
+    printf("%f %f\n", creal(ffunction[0][0]), cimag(ffunction[0][0]));
+    printf("%f %f %f %f\n", creal(FLMpos[l][0]), cimag(FLMpos[l][0]), creal(ylmylm), cimag(ylmylm));
     for(m=1; m<=l; m++){
        plmplm = gsl_sf_legendre_sphPlm(l, m, cos(0))*gsl_sf_legendre_sphPlm(l, m, cos(0));
        exponentials = cexp(I*0*m)*cexp(-I*0*m);
        ylmylm = exponentials*plmplm;
        ffunction[0][0] += FLMpos[l][0]*ylmylm;
+       printf("%f %f\n", creal(ffunction[0][0]), cimag(ffunction[0][0]));
        plmplm = plmplm*pow(gsl_sf_fact(l-m), 2)/pow(gsl_sf_fact(l+m), 2);
        exponentials = conj(exponentials);
        ylmylm = exponentials*plmplm;
        ffunction[0][0] += FLMneg[l][m]*ylmylm;
+       printf("%f %f\n", creal(ffunction[0][0]), cimag(ffunction[0][0]));
     }
   }
   printf("%f %f\n", creal(ffunction[0][0]), cimag(ffunction[0][0]));
