@@ -21,11 +21,12 @@ double complex FLMpos[20][20] = {0};
 double complex FLMneg[20][20] = {0};
 double complex ffunction[3][3]={0};
 double epsilon = 80;
-double radius = 4;
+double radius = 2;
 double depth = 10;
-double smallr = 2;
-double smallrp = 2;
-int lmax=2;
+double smallr = 1;
+double smallrp = 1;
+double thetacoord, phicoord=0;
+int lmax=4;
 double Dsmallr, Dbigr, Abigr=0;
 double Dsmallrp, Asmallrp=0;  //Dsmallrp involves r-prime, and the small r is also the first argument of the image charge
 
@@ -33,7 +34,14 @@ void projectontoYLM();
 void imagecharges(double, double, double, double);
 void calculateFLM(void);
 
-int main(){
+int main(int argc, char *argv[]){
+  sscanf(argv[1], "%lf", &thetacoord);
+  sscanf(argv[2], "%lf", &phicoord);
+  sscanf(argv[3], "%lf", &depth);
+  sscanf(argv[4], "%lf", &radius);
+  sscanf(argv[5], "%lf", &smallr);
+  sscanf(argv[6], "%lf", &smallrp);
+  sscanf(argv[7], "%d", &lmax);
 
   projectontoYLM();
   calculateFLM();
@@ -43,8 +51,8 @@ int main(){
 
 void projectontoYLM(){
   //at the moment this is just using the rectangle method (I'm pathetic, I know)
-  int Ntheta=20;
-  int Nphi=40;
+  int Ntheta=40;
+  int Nphi=80;
   double theta, thetap, phi, phip=0;
   double plmplm=0;
   double complex exponentials=0;
@@ -53,11 +61,9 @@ void projectontoYLM(){
   double h=0;
   int i,j,k,l,m,n=0;
   h = pow(PI, 4)*4/(Ntheta*Ntheta*Nphi*Nphi);
-  printf("%f\n", h);
   for(l=0; l<=lmax; l++){
     for(m=0; m<=l; m++){
       for(i=0; i<=Ntheta-1; i++){
-	printf("%d\n", i);
 	theta = i*(PI)/Ntheta;
 	for(j=0; j<=Nphi-1; j++){
 	  phi = j*(2*PI)/Nphi;
@@ -109,55 +115,85 @@ void calculateFLM(){
   double complex denominator=0;
   double complex energy=0;
   double complex exponentials;
+  double complex flmsurfpos=0;
+  double complex flmsurfneg=0;
+  double ldum=0;
   double complex ylmylm=0;
   double plmplm=0;
-  double p4 =0;
   double lp21, eps = 0;
   eps=epsilon;
-  p4 = 4*PI;
   for(l=0; l<=lmax; l++){
     lp21 = 2*l+1;
+    ldum=l;
     for(m=0; m<=l; m++){
-      numerator = (pow(eps-1, 3)/(p4*eps))*((pow(smallr/radius, l)*p4*(l+1)/(lp21))*(-p4/(radius*(lp21)) - YLMAbigrpos[l][m]) + radius*YLMDsmallrpos[l][m]*(p4/(lp21) + radius*YLMAbigrpos[l][m]));
-      denominator = (eps-(eps-1))*(pow(radius, 2)*YLMDsmallrpos[l][m]-p4*(l+1)/(lp21));
-      numerator = numerator*((-p4*(l+1)/(lp21))*pow(smallrp/radius, l) + pow(radius, 2)*YLMDsmallrppos[l][m]);
+      flmsurfpos=0;
+      flmsurfneg=0;
+      FLMpos[l][m]=0;
+      FLMneg[l][m]=0;
+      /*YLMAbigrpos[l][m]=0;
+      YLMDsmallrpos[l][m]=0;
+      YLMDbigrpos[l][m]=0;
+      YLMAsmallrppos[l][m]=0;
+      YLMDsmallrppos[l][m]=0;
+      YLMAbigrneg[l][m]=0;
+      YLMDsmallrneg[l][m]=0;
+      YLMDbigrneg[l][m]=0;
+      YLMAsmallrpneg[l][m]=0;
+      YLMDsmallrpneg[l][m]=0;*/
+      flmsurfpos = ((ldum+1)/(pow(lp21,2)))*pow(smallr, l)/pow(radius, l+1);
+      flmsurfpos += ((ldum+1)/(lp21))*pow(smallr/radius, l)*YLMAbigrpos[l][m];
+      flmsurfpos -= YLMDsmallrpos[l][m]*radius/(lp21);
+      flmsurfpos -= YLMDsmallrpos[l][m]*YLMAbigrpos[l][m]*pow(radius, 2);
+      flmsurfpos = -pow(eps-1, 2)*flmsurfpos/eps;
+      denominator = ((ldum+1)*eps + ldum)/(lp21) - (eps-1)*YLMDbigrpos[l][m];
+      flmsurfpos = flmsurfpos/denominator;
+      FLMpos[l][m] = -((ldum+1)/(pow(lp21, 2)))*pow(smallr*smallrp, l)/pow(radius, 2*l+1);
+      FLMpos[l][m] += pow(smallrp/radius, l)*YLMDsmallrpos[l][m]*radius/(lp21);
+      FLMpos[l][m] += pow(radius, 2)*YLMAsmallrppos[l][m]*YLMDsmallrpos[l][m];
+      FLMpos[l][m] = FLMpos[l][m]*pow(eps-1, 2)/eps;
+      FLMpos[l][m] += (eps-1)*flmsurfpos*(pow(radius, 2)*YLMDsmallrppos[l][m] - pow(smallrp/radius, l)*(ldum+1)/(lp21));
 
-      FLMpos[l][m] = numerator/denominator;
-      numerator = (pow(eps-1, 2)/(p4*eps))*(-pow(smallrp/radius, l)*pow(smallr, l)*pow(radius,-(l+1))*pow(p4/lp21, 2)*(l+1));
-      numerator +=  (pow(eps-1, 2)/(p4*eps))*pow(smallrp, l)*pow(radius, -l+1)*YLMDsmallrpos[l][m]*p4/lp21;
-      numerator += (pow(eps-1, 2)/(p4*eps))*pow(radius, 2)* YLMAsmallrppos[l][m]*YLMDsmallrpos[l][m];
-      FLMpos[l][m] += numerator;
 
-      numerator = (pow(eps-1, 3)/(p4*eps))*((pow(smallr/radius, l)*p4*(l+1)/(lp21))*(-p4/(radius*(lp21)) - YLMAbigrneg[l][m]) + radius*YLMDsmallrneg[l][m]*(p4/(lp21) + radius*YLMAbigrneg[l][m]));
-      denominator = (eps-(eps-1))*(pow(radius, 2)*YLMDsmallrneg[l][m]-p4*(l+1)/(lp21));
-      numerator = numerator*((-p4*(l+1)/(lp21))*pow(smallrp/radius, l) + pow(radius, 2)*YLMDsmallrpneg[l][m]);
-      FLMneg[l][m] = numerator/denominator;
-      numerator = (pow(eps-1, 2)/(p4*eps))*(-pow(smallrp/radius, l)*pow(smallr, l)*pow(radius,-(l+1))*pow(p4/lp21, 2)*(l+1));
-      numerator +=  (pow(eps-1, 2)/(p4*eps))*pow(smallrp, l)*pow(radius, -l+1)*YLMDsmallrneg[l][m]*p4/lp21;
-      numerator += (pow(eps-1, 2)/(p4*eps))*pow(radius, 2)* YLMAsmallrpneg[l][m]*YLMDsmallrneg[l][m];
-      FLMneg[l][m] += numerator;
+      flmsurfneg = ((ldum+1)/(pow(lp21,2)))*pow(smallr, l)/pow(radius, l+1);
+      flmsurfneg += ((ldum+1)/(lp21))*pow(smallr/radius, l)*YLMAbigrneg[l][m];
+      flmsurfneg -= YLMDsmallrneg[l][m]*radius/(lp21);
+      flmsurfneg -= YLMDsmallrneg[l][m]*YLMAbigrneg[l][m]*pow(radius, 2);
+      flmsurfneg = -pow(eps-1, 2)*flmsurfneg/eps;
+      denominator = ((ldum+1)*eps + ldum)/(lp21) - (eps-1)*YLMDbigrneg[l][m];
+      flmsurfneg = flmsurfneg/denominator;
+      FLMneg[l][m] = -((ldum+1)/(pow(lp21, 2)))*pow(smallr*smallrp, l)/pow(radius, 2*l+1);
+      FLMneg[l][m] += pow(smallrp/radius, l)*YLMDsmallrneg[l][m]*radius/(lp21);
+      FLMneg[l][m] += pow(radius, 2)*YLMAsmallrpneg[l][m]*YLMDsmallrneg[l][m];
+      FLMneg[l][m] = FLMneg[l][m]*pow(eps-1, 2)/eps;
+      FLMneg[l][m] += (eps-1)*flmsurfneg*(pow(radius, 2)*YLMDsmallrpneg[l][m] - pow(smallrp/radius, l)*(ldum+1)/(lp21));
+
+
+      //printf("%d %d %f %f\n", l, m, creal(FLMpos[l][m]), cimag(FLMpos[l][m]));
+      //printf("neg %d %d %f %f\n", l, m, creal(FLMneg[l][m]), cimag(FLMneg[l][m]));
 
     }
   }
 
   for(l=0; l<=lmax; l++){
     m=0;
-    plmplm = gsl_sf_legendre_sphPlm(l, 0, cos(0))*gsl_sf_legendre_sphPlm(l, 0, cos(0));
-    exponentials = cexp(I*0*m)*cexp(-I*0*m);
+    plmplm = gsl_sf_legendre_sphPlm(l, 0, cos(thetacoord))*gsl_sf_legendre_sphPlm(l, 0, cos(thetacoord));
+    exponentials = cexp(I*phicoord*m)*cexp(-I*phicoord*m);
     ylmylm = exponentials*plmplm;
     ffunction[0][0] += FLMpos[l][0]*ylmylm;
     for(m=1; m<=l; m++){
-       plmplm = gsl_sf_legendre_sphPlm(l, m, cos(0))*gsl_sf_legendre_sphPlm(l, m, cos(0));
-       exponentials = cexp(I*0*m)*cexp(-I*0*m);
+       plmplm = gsl_sf_legendre_sphPlm(l, m, cos(thetacoord))*gsl_sf_legendre_sphPlm(l, m, cos(thetacoord));
+       exponentials = cexp(I*phicoord*m)*cexp(-I*phicoord*m);
        ylmylm = exponentials*plmplm;
-       ffunction[0][0] += FLMpos[l][0]*ylmylm;
+       ffunction[0][0] += FLMpos[l][m]*ylmylm;
        plmplm = plmplm*pow(gsl_sf_fact(l-m), 2)/pow(gsl_sf_fact(l+m), 2);
        exponentials = conj(exponentials);
        ylmylm = exponentials*plmplm;
        ffunction[0][0] += FLMneg[l][m]*ylmylm;
     }
   }
-  printf("%f %f\n", creal(ffunction[0][0]), cimag(ffunction[0][0]));
+
+  ffunction[0][0] = -ffunction[0][0]*eps*4*PI/(eps-1);
+  printf("energies .. %f %f\n", creal(ffunction[0][0]), cimag(ffunction[0][0]));
 }
 
 void imagecharges(double theta, double phi, double thetap, double phip){ 
