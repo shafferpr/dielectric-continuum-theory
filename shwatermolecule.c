@@ -52,8 +52,8 @@ int main(int argc, char *argv[]){
   int p=0;
   int p1, p2=0;
   initialize();
-  for(p=0; p<=17; p++){
-    depth = 10*radius - 0.5*radius*p;
+  for(p=0; p<=64; p++){
+    depth = 22 - 0.3*p;
     for(p1=0; p1<=2; p1++){
       for(p2=0; p2<=2; p2++){
 	smallr = radii[p1];
@@ -216,6 +216,7 @@ void orientationalaverage(){
   double plmplm=0;
   FILE *enptr;
   enptr=fopen(enfile, "a");
+  generateorientation();
   for(i=0; i<=2; i++){
     for(j=0; j<=2; j++){
       ffunction[i][j]=0;
@@ -249,14 +250,16 @@ void orientationalaverage(){
   fclose(enptr);
 }
 
+
 void generateorientation(void){
   thetas[0] = 0.5;
   thetas[1] = 0.0;
-  thetas[2] = PI/2;
+  thetas[2] = 1.902;
   phis[0] = 0.5;
   phis[1] = 0.0;
   phis[2] = 0.0;
 }
+
 
 void imagecharges(double theta, double phi, double thetap, double phip){ 
   double result=0;

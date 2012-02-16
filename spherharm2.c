@@ -48,11 +48,11 @@ int main(int argc, char *argv[]){
   sscanf(argv[8], "%s", &enfile);
   sscanf(argv[9], "%d", &gridsize);
   int p=0;
-  for(p=0; p<=17; p++){
-    depth = 10*radius - 0.5*radius*p;
+  for(p=0; p<=64; p++){
+    depth = 22 - 0.3*p;
     projectontoYLM();
     calculateFLM();
-    }
+  }
   return 0;
 }
 
@@ -221,11 +221,12 @@ void calculateFLM(){
     }
   }
 
-  ffunction[0][0] =  ffunction[0][0]*eps*4*PI/(eps-1);
+  ffunction[0][0] = ffunction[0][0]*eps*4*PI/(eps-1);
   printf("energies .. %f %f\n", creal(ffunction[0][0]), cimag(ffunction[0][0]));
-  fprintf(enptr, "%f %f\n", depth/radius, creal(ffunction[0][0]));
+  fprintf(enptr, "%f %f\n", depth, creal(ffunction[0][0]));
   fclose(enptr);
 }
+
 
 void imagecharges(double theta, double phi, double thetap, double phip){ 
   double result=0;
