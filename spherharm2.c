@@ -48,8 +48,8 @@ int main(int argc, char *argv[]){
   sscanf(argv[8], "%s", &enfile);
   sscanf(argv[9], "%d", &gridsize);
   int p=0;
-  for(p=0; p<=64; p++){
-    depth = 22 - 0.3*p;
+  for(p=0; p<=24; p++){
+    depth = 25 - 1.0*p;
     projectontoYLM();
     calculateFLM();
   }
@@ -122,16 +122,17 @@ void projectontoYLM(){
       YLMAsmallrpneg[l][m] = YLMAsmallrpneg[l][m]*h;
       YLMDsmallrppos[l][m] = YLMDsmallrppos[l][m]*h;
       YLMDsmallrpneg[l][m] = YLMDsmallrpneg[l][m]*h;
-      //printf("Abigr %f %f\n", creal(YLMAbigrpos[l][m]), cimag(YLMAbigrpos[l][m]));
-      //printf("Dbigr %f %f\n", creal(YLMDbigrpos[l][m]), cimag(YLMDbigrpos[l][m]));
-      //printf("Dsmallr %f %f\n", creal(YLMDsmallrpos[l][m]), cimag(YLMDsmallrpos[l][m]));
-      //printf("Asmallrp %f %f\n", creal(YLMAsmallrppos[l][m]), cimag(YLMAsmallrppos[l][m]));
-      //printf("Dsmallrp %f %f\n\n", creal(YLMDsmallrppos[l][m]), cimag(YLMDsmallrppos[l][m]));
+      printf("Abigr %.12f %.12f\n", creal(YLMAbigrpos[l][m]), cimag(YLMAbigrpos[l][m]));
+      //printf("Dbigr %.12f %.12f\n", creal(YLMDbigrpos[l][m]), cimag(YLMDbigrpos[l][m]));
+      //printf("Dsmallr %.12f %.12f\n", creal(YLMDsmallrpos[l][m]), cimag(YLMDsmallrpos[l][m]));
+      //printf("Asmallrp %.12f %.12f\n", creal(YLMAsmallrppos[l][m]), cimag(YLMAsmallrppos[l][m]));
+      //printf("Dsmallrp %.12f %.12f\n\n", creal(YLMDsmallrppos[l][m]), cimag(YLMDsmallrppos[l][m]));
     }
   }
 
   //printf("%f %f\n", cimag(YLMAbigrpos[3][0]), h);
 }
+
 
 
 void calculateFLM(){
@@ -168,31 +169,30 @@ void calculateFLM(){
       YLMAsmallrpneg[l][m]=0;
       YLMDsmallrpneg[l][m]=0;*/
       flmsurfpos = ((ldum+1)/(pow(lp21,2)))*pow(smallr, l)/pow(radius, l+1);
-      flmsurfpos += ((ldum+1)/(lp21))*pow(smallr/radius, l)*YLMAbigrpos[l][m];
+      flmsurfpos -= ((ldum+1)/(lp21))*pow(smallr/radius, l)*YLMAbigrpos[l][m];// the -= was originally +=
       flmsurfpos -= YLMDsmallrpos[l][m]*radius/(lp21);
       flmsurfpos -= YLMDsmallrpos[l][m]*YLMAbigrpos[l][m]*pow(radius, 2);
       flmsurfpos = -pow(eps-1, 2)*flmsurfpos/eps;
-      denominator = ((ldum+1)*eps + ldum)/(lp21) - (eps-1)*YLMDbigrpos[l][m]*radius;
+      denominator = ((ldum+1)*eps + ldum)/(lp21) - (eps-1)*YLMDbigrpos[l][m]*radius*radius;
       flmsurfpos = flmsurfpos/denominator;
       FLMpos[l][m] = -((ldum+1)/(pow(lp21, 2)))*pow(smallr*smallrp, l)/pow(radius, 2*l+1);
       FLMpos[l][m] += pow(smallrp/radius, l)*YLMDsmallrpos[l][m]*radius/(lp21);
       FLMpos[l][m] += pow(radius, 2)*YLMAsmallrppos[l][m]*YLMDsmallrpos[l][m];
-      FLMpos[l][m] -= ((ldum+1)/(lp21))*YLMAsmallrppos[l][m]*pow(smallr/radius, l);
+      FLMpos[l][m] += ((ldum+1)/(lp21))*YLMAsmallrppos[l][m]*pow(smallr/radius, l); //the += was originally a -=
       FLMpos[l][m] = FLMpos[l][m]*pow(eps-1, 2)/eps;
       FLMpos[l][m] += (eps-1)*flmsurfpos*(pow(radius, 2)*YLMDsmallrppos[l][m] - pow(smallrp/radius, l)*(ldum+1)/(lp21));
 
-
       flmsurfneg = ((ldum+1)/(pow(lp21,2)))*pow(smallr, l)/pow(radius, l+1);
-      flmsurfneg += ((ldum+1)/(lp21))*pow(smallr/radius, l)*YLMAbigrneg[l][m];
+      flmsurfneg -= ((ldum+1)/(lp21))*pow(smallr/radius, l)*YLMAbigrneg[l][m];//same as above
       flmsurfneg -= YLMDsmallrneg[l][m]*radius/(lp21);
       flmsurfneg -= YLMDsmallrneg[l][m]*YLMAbigrneg[l][m]*pow(radius, 2);
       flmsurfneg = -pow(eps-1, 2)*flmsurfneg/eps;
-      denominator = ((ldum+1)*eps + ldum)/(lp21) - (eps-1)*YLMDbigrneg[l][m]*radius;
+      denominator = ((ldum+1)*eps + ldum)/(lp21) - (eps-1)*YLMDbigrneg[l][m]*radius*radius;
       flmsurfneg = flmsurfneg/denominator;
       FLMneg[l][m] = -((ldum+1)/(pow(lp21, 2)))*pow(smallr*smallrp, l)/pow(radius, 2*l+1);
       FLMneg[l][m] += pow(smallrp/radius, l)*YLMDsmallrneg[l][m]*radius/(lp21);
       FLMneg[l][m] += pow(radius, 2)*YLMAsmallrpneg[l][m]*YLMDsmallrneg[l][m];
-      FLMneg[l][m] -= ((ldum+1)/(lp21))*YLMAsmallrpneg[l][m]*pow(smallr/radius, l);
+      FLMneg[l][m] += ((ldum+1)/(lp21))*YLMAsmallrpneg[l][m]*pow(smallr/radius, l);//save as above
       FLMneg[l][m] = FLMneg[l][m]*pow(eps-1, 2)/eps;
       FLMneg[l][m] += (eps-1)*flmsurfneg*(pow(radius, 2)*YLMDsmallrpneg[l][m] - pow(smallrp/radius, l)*(ldum+1)/(lp21));
 
@@ -202,6 +202,7 @@ void calculateFLM(){
 
     }
   }
+
   ffunction[0][0]=0;
   for(l=0; l<=lmax; l++){
     m=0;
@@ -222,7 +223,7 @@ void calculateFLM(){
   }
 
   ffunction[0][0] = ffunction[0][0]*eps*4*PI/(eps-1);
-  printf("energies .. %f %f\n", creal(ffunction[0][0]), cimag(ffunction[0][0]));
+  printf("energies .. %f %f\n", creal(ffunction[0][0]), depth);
   fprintf(enptr, "%f %f\n", depth, creal(ffunction[0][0]));
   fclose(enptr);
 }
@@ -230,7 +231,7 @@ void calculateFLM(){
 
 void imagecharges(double theta, double phi, double thetap, double phip){ 
   double result=0;
-  double inverser1, inverser2, inverser3=0;
+  double inverser1, inverser2, inverser3, inverser4=0;
   double cost, costp, cosp, cospp=0;
   double sint, sintp, sinp, sinpp=0;
   double numerator=0;
@@ -247,17 +248,22 @@ void imagecharges(double theta, double phi, double thetap, double phip){
   inverser1 = 1/(sqrt(inverser1)*radius);
   Abigr = inverser1*(epsilon-1)/(epsilon+1);
 
-  inverser2 = (pow(smallr*cosp*sint - radius*cospp*sintp, 2) + pow(smallr*sinp*sint - radius*sinpp*sintp,2) + pow(smallr*cost-radius*costp-2*depth,2));
+  inverser2 = (pow(smallr*cosp*sint - radius*cospp*sintp, 2) + pow(smallr*sinp*sint - radius*sinpp*sintp,2) + pow(smallr*cost+radius*costp-2*depth,2));
   inverser2 = 1/sqrt(inverser2);
-  numerator = (smallr*cosp*sint-radius*cospp*sintp)*cospp*sintp + (smallr*sinp*sint-radius*sinpp*sintp)*sinpp*sintp - (smallr*cost+radius*costp-2*depth)*costp; 
+  numerator = (smallr*cosp*sint - radius*cospp*sintp)*cospp*sintp + (smallr*sinp*sint-radius*sinpp*sintp)*sinpp*sintp - (smallr*cost+radius*costp-2*depth)*costp; 
+  //numerator = -(smallr*cosp*sint-radius*cospp*sintp)*cospp*sintp - (smallr*sinp*sint-radius*sinpp*sintp)*sinpp*sintp - (smallr*cost+radius*costp-2*depth)*costp; //testing
   Dsmallr = numerator*pow(inverser2, 3)*(epsilon-1)/(epsilon+1);
   numerator = -radius*(cosp*sint - cospp*sintp)*cosp*sint - radius*(sinp*sint - sinpp*sintp)*sinp*sint - (radius*cost + radius*costp - 2*depth)*cost;
+  //numerator = radius*(cosp*sint - cospp*sintp)*cosp*sint + radius*(sinp*sint - sinpp*sintp)*sinp*sint - (radius*cost + radius*costp - 2*depth)*cost;//testing
   Dbigr = numerator*pow(inverser1, 3)*(epsilon-1)/(epsilon+1);
-
-  inverser3 =  (pow(smallrp*cosp*sint - radius*cospp*sintp, 2) + pow(smallrp*sinp*sint - radius*sinpp*sintp,2) + pow(smallrp*cost-radius*costp-2*depth,2));
+  inverser3 =  (pow(radius*cosp*sint - smallrp*cospp*sintp, 2) + pow(radius*sinp*sint - smallrp*sinpp*sintp,2) + pow(radius*cost+smallrp*costp-2*depth,2));
   inverser3 = 1/sqrt(inverser3);
   Asmallrp = inverser3*(epsilon-1)/(epsilon+1);
-  numerator = -(smallrp*cosp*sint-radius*cospp*sintp)*cospp*sintp - (smallrp*sinp*sint-radius*sinpp*sintp)*sinpp*sintp - (smallrp*cost+radius*costp-2*depth)*costp;
-  Dsmallrp = numerator*pow(inverser3, 3)*(epsilon-1)/(epsilon+1);
+  inverser4 = (pow(radius*cosp*sint - smallrp*cospp*sintp, 2) + pow(radius*sinp*sint - smallrp*sinpp*sintp,2) + pow(radius*cost+smallrp*costp-2*depth,2));
+  inverser4 = 1/sqrt(inverser4);
+  numerator = -(radius*cosp*sint-smallrp*cospp*sintp)*cosp*sint - (radius*sinp*sint-smallrp*sinpp*sintp)*sinp*sint - (radius*cost+smallrp*costp-2*depth)*cost;
+  //numerator = (smallrp*cosp*sint-radius*cospp*sintp)*cospp*sintp + (smallrp*sinp*sint-radius*sinpp*sintp)*sinpp*sintp - (smallrp*cost+radius*costp-2*depth)*costp;//testing
+  Dsmallrp = numerator*pow(inverser4, 3)*(epsilon-1)/(epsilon+1);
+
   //printf("%f %f\n", Dsmallr, Dsmallrp);
 }
