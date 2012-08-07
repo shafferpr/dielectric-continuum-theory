@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
   computeb();
   computek();
   mat A(gridpoints, gridpoints);
-  startingtheta=0;
+  startingtheta=acos(d/L);
   for(i=0; i<=gridpoints-1; i++){
     for(j=0; j<=gridpoints-1; j++){
       A(i,j)=B[i][j];
@@ -49,7 +49,6 @@ int main(int argc, char *argv[]){
   for(i=0; i<=gridpoints-1; i++){
     ftheta[i]=f(i);
   }
-
   computef();
   return 0;
 }
@@ -63,7 +62,6 @@ void computef(){
   spacing=(PI-startingtheta)/gridpoints;
   fdd = pow(epsilon-1,2)/(4*PI*epsilon*L);
   integral=0;
-  //  printf("%f\n", fdd);
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
     integral += sin(thetai)*spacing*(L-2*d*cos(thetai))/pow(L*L-4*d*L*cos(thetai)+4*d*d,1.5);
@@ -71,23 +69,19 @@ void computef(){
   integral = integral*pow(epsilon-1,2)*(epsilon-2)/(8*PI*epsilon*(epsilon+1));
   fdd +=integral;
   integral=0;
-  //  printf("%f\n", fdd);
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
     integral += sin(thetai)*spacing/pow(L*L-4*d*L*cos(thetai)+4*d*d,0.5);
   }
   integral=integral*L*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
   fdd -= integral;
-  //printf("%f\n", fdd);
   integral=0;
-  for(i=1; i<=gridpoints-1; i++){
+  for(i=0; i<=gridpoints-1; i++){
     thetai = startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral += sin(thetai)*spacing*ftheta[i];
-    //printf("%f\n", integral);
+    integral+=sin(thetai)*spacing*ftheta[i];
   }
   integral=integral*(epsilon-1)/2;
   fdd += integral;
-  //printf("%f\n", fdd);
   energy = fdd*epsilon*2*PI/(epsilon-1);
   printf("%f %f %f %d\n", d, energy, delta, gridpoints);
 }
