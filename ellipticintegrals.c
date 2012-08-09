@@ -10,9 +10,9 @@ using namespace arma;
 //g++ -O2 -lgsl -lgslcblas -llapack ellipticintegrals.c -o ellipticint
 //this file computes solvation energy for d<L(the sphere penetrating the boundary)
 double result=0;
-double B[200][200]={0};
-double K[200]={0};
-double ftheta[200]={0};
+double B[400][400]={0};
+double K[400]={0};
+double ftheta[400]={0};
 double delta=0.01;
 double epsilon=80;
 double L, d=0;
@@ -29,10 +29,12 @@ int main(int argc, char *argv[]){
   sscanf(argv[2], "%lf", &d);
   sscanf(argv[3], "%d", &gridpoints);
   sscanf(argv[4], "%lf", &delta);
+  double spacing=0;
   computeb();
   computek();
   mat A(gridpoints, gridpoints);
   startingtheta=0;
+  spacing=(PI-startingtheta)/gridpoints;
   for(i=0; i<=gridpoints-1; i++){
     for(j=0; j<=gridpoints-1; j++){
       A(i,j)=B[i][j];
@@ -61,32 +63,31 @@ void computef(){
   double thetai=0;
   double energy=0;
   spacing=(PI-startingtheta)/gridpoints;
-  fdd = pow(epsilon-1,2)/(4*PI*epsilon*L);
+  fdd = -(pow(epsilon,2)-1)/(4*PI*epsilon*L);
+  //printf("%f\n", fdd);
   integral=0;
-  //  printf("%f\n", fdd);
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral += sin(thetai)*spacing*(L-2*d*cos(thetai))/pow(L*L-4*d*L*cos(thetai)+4*d*d,1.5);
+    integral += sin(thetai)*spacing*L*(L-2*d*cos(thetai))/pow(L*L-4*d*L*cos(thetai)+4*d*d,1.5);
   }
-  integral = integral*pow(epsilon-1,2)*(epsilon-2)/(8*PI*epsilon*(epsilon+1));
-  fdd +=integral;
+  integral = integral*pow(epsilon-1,2)/(8*PI*(epsilon+1));
+  fdd -=integral;
   integral=0;
-  //  printf("%f\n", fdd);
+  //printf("%f\n", fdd);
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
     integral += sin(thetai)*spacing/pow(L*L-4*d*L*cos(thetai)+4*d*d,0.5);
   }
-  integral=integral*L*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
+  integral=integral*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
   fdd -= integral;
   //printf("%f\n", fdd);
   integral=0;
-  for(i=1; i<=gridpoints-1; i++){
+  for(i=0; i<=gridpoints-1; i++){
     thetai = startingtheta + (3.14159-startingtheta)*i/(gridpoints);
     integral += sin(thetai)*spacing*ftheta[i];
-    //printf("%f\n", integral);
   }
   integral=integral*(epsilon-1)/2;
-  fdd += integral;
+  fdd -= integral;
   //printf("%f\n", fdd);
   energy = fdd*epsilon*2*PI/(epsilon-1);
   printf("%f %f %f %d\n", d, energy, delta, gridpoints);
@@ -119,14 +120,14 @@ void computek(){
   spacing=(PI-startingtheta)/gridpoints;
   for(i=0; i<=gridpoints-1; i++){
     theta=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    K[i] = (epsilon-1)*(epsilon-1)/(4*PI*epsilon*(epsilon+1)*(L*L-4*d*L*cos(theta)+4*d*d));
+    K[i] = (epsilon-1)*(epsilon-1)/(4*PI*epsilon*(epsilon+1)*sqrt(L*L-4*d*L*cos(theta)+4*d*d));
     sum=0;
     for(j=0; j<=gridpoints-1; j++){
       thetap = startingtheta + j*spacing;
-      sum += Integral(theta, thetap)*(sin(thetap)/L + (epsilon-1)*(L-2*d*cos(thetap))*pow(L*L-4*d*L+4*d*d, -1.5)/(epsilon+1));
+      sum += Integral(theta, thetap)*sin(thetap)*(1/L + (epsilon-1)*(L-2*d*cos(thetap))*pow(L*L-4*d*L+4*d*d, -1.5)*L/(epsilon+1));
     }
     sum = sum*pow(epsilon-1/(4*PI),2)/(epsilon*sqrt(2))*spacing;
-    K[i] -=sum;
+    K[i] -= sum;
   }
 
 }

@@ -60,20 +60,20 @@ void computef(){
   double thetai=0;
   double energy=0;
   spacing=(PI-startingtheta)/gridpoints;
-  fdd = pow(epsilon-1,2)/(4*PI*epsilon*L);
+  fdd = -(pow(epsilon,2)-1)/(4*PI*epsilon*L);
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral += sin(thetai)*spacing*(L-2*d*cos(thetai))/pow(L*L-4*d*L*cos(thetai)+4*d*d,1.5);
+    integral += sin(thetai)*spacing*L*(L-2*d*cos(thetai))/pow(L*L-4*d*L*cos(thetai)+4*d*d,1.5);
   }
-  integral = integral*pow(epsilon-1,2)*(epsilon-2)/(8*PI*epsilon*(epsilon+1));
-  fdd +=integral;
+  integral = integral*pow(epsilon-1,2)/(8*PI*(epsilon+1));
+  fdd -=integral;
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
     integral += sin(thetai)*spacing/pow(L*L-4*d*L*cos(thetai)+4*d*d,0.5);
   }
-  integral=integral*L*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
+  integral=integral*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
   fdd -= integral;
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
