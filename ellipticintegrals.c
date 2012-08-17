@@ -103,8 +103,9 @@ void computeb(){
     for(j=0; j<=gridpoints-1; j++){
       thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
       thetaj=startingtheta + (3.14159-startingtheta)*j/(gridpoints);
-      if(i==j)
+      if(i==j){
 	B[i][j]=1;
+      }
       B[i][j] += prefactor*Integral(thetai, thetaj)*sin(thetai);
       //printf("%d %d %f\n", i, j, B[i][j]);
     }
@@ -126,7 +127,7 @@ void computek(){
       thetap = startingtheta + j*spacing;
       sum += Integral(theta, thetap)*sin(thetap)*(1/L + (epsilon-1)*(L-2*d*cos(thetap))*pow(L*L-4*d*L+4*d*d, -1.5)*L/(epsilon+1));
     }
-    sum = sum*pow(epsilon-1/(4*PI),2)/(epsilon*sqrt(2))*spacing;
+    sum = sum*spacing*pow((epsilon-1)/(4*PI),2)/(epsilon*sqrt(2));
     K[i] -= sum;
   }
 
