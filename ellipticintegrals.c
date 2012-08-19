@@ -63,7 +63,7 @@ void computef(){
   double thetai=0;
   double energy=0;
   spacing=(PI-startingtheta)/gridpoints;
-  fdd = -(pow(epsilon,2)-1)/(4*PI*epsilon*L);
+  fdd = -(pow(epsilon-1,2))/(4*PI*epsilon*L);
   //printf("%f\n", fdd);
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
@@ -79,7 +79,7 @@ void computef(){
     integral += sin(thetai)*spacing/pow(L*L-4*d*L*cos(thetai)+4*d*d,0.5);
   }
   integral=integral*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
-  fdd -= integral;
+  fdd += integral;
   //printf("%f\n", fdd);
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
