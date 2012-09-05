@@ -10,9 +10,9 @@ using namespace arma;
 //g++ -O2 -lgsl -lgslcblas -llapack ellipticintegrals.c -o ellipticint
 //this file computes solvation energy for d<L(the sphere penetrating the boundary)
 double result=0;
-double B[200][200]={0};
-double K[200]={0};
-double ftheta[200]={0};
+double B[400][400]={0};
+double K[400]={0};
+double ftheta[400]={0};
 double delta=0.01;
 double epsilon=80;
 double L, d=0;
@@ -29,10 +29,13 @@ int main(int argc, char *argv[]){
   sscanf(argv[2], "%lf", &d);
   sscanf(argv[3], "%d", &gridpoints);
   sscanf(argv[4], "%lf", &delta);
+  double spacing=0;
   computeb();
   computek();
   mat A(gridpoints, gridpoints);
+  //startingtheta=0;
   startingtheta=acos(d/L);
+  spacing=(PI-startingtheta)/gridpoints;
   for(i=0; i<=gridpoints-1; i++){
     for(j=0; j<=gridpoints-1; j++){
       A(i,j)=B[i][j];
@@ -49,6 +52,7 @@ int main(int argc, char *argv[]){
   for(i=0; i<=gridpoints-1; i++){
     ftheta[i]=f(i);
   }
+
   computef();
   return 0;
 }
@@ -60,7 +64,8 @@ void computef(){
   double thetai=0;
   double energy=0;
   spacing=(PI-startingtheta)/gridpoints;
-  fdd = -(pow(epsilon,2)-1)/(4*PI*epsilon*L);
+  fdd = -(pow(epsilon-1,2))/(4*PI*epsilon*L);
+  //printf("%f\n", fdd);
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
@@ -69,19 +74,22 @@ void computef(){
   integral = integral*pow(epsilon-1,2)/(8*PI*(epsilon+1));
   fdd -=integral;
   integral=0;
+  //printf("%f\n", fdd);
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
     integral += sin(thetai)*spacing/pow(L*L-4*d*L*cos(thetai)+4*d*d,0.5);
   }
   integral=integral*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
-  fdd -= integral;
+  fdd += integral;
+  //printf("%f\n", fdd);
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
     thetai = startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral+=sin(thetai)*spacing*ftheta[i];
+    integral += sin(thetai)*spacing*ftheta[i];
   }
   integral=integral*(epsilon-1)/2;
-  fdd += integral;
+  fdd -= integral;
+  //printf("%f\n", fdd);
   energy = fdd*epsilon*2*PI/(epsilon-1);
   printf("%f %f %f %d\n", d, energy, delta, gridpoints);
 }
@@ -90,15 +98,16 @@ void computeb(){
   double thetai, thetaj=0;
   double prefactor=0;
   double spacing=0;
-  spacing=(PI-startingtheta)/gridpoints;
-  prefactor = spacing*(epsilon-1)/(2*sqrt(2)*PI*(epsilon+1));
+  spacing=PI/gridpoints;
+  prefactor = spacing*(epsilon-1)/(2*PI*(epsilon+1));
   for(i=0; i<=gridpoints-1; i++){
     for(j=0; j<=gridpoints-1; j++){
-      thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-      thetaj=startingtheta + (3.14159-startingtheta)*j/(gridpoints);
-      if(i==j)
+      thetai=3.14159*i/gridpoints;
+      thetaj=3.14159*j/gridpoints;
+      if(i==j){
 	B[i][j]=1;
-      B[i][j] += prefactor*Integral(thetai, thetaj)*sin(thetai);
+      }
+      B[i][j] -= prefactor*Integral(thetai, thetaj);
       //printf("%d %d %f\n", i, j, B[i][j]);
     }
   }
@@ -110,32 +119,147 @@ void computek(){
   double theta=0;
   double thetap=0;
   double sum=0;
-  spacing=(PI-startingtheta)/gridpoints;
+  double fullintegral=0;
+  spacing=PI/gridpoints;
   for(i=0; i<=gridpoints-1; i++){
-    theta=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    K[i] = (epsilon-1)*(epsilon-1)/(4*PI*epsilon*(epsilon+1)*(L*L-4*d*L*cos(theta)+4*d*d));
+    theta = i*spacing;
+    if(thetai<startingtheta){
+      K[i] = (epsilon-1)*(epsilon-1)*cos(theta)/(4*PI*epsilon*(epsilon+1)*d);
+    }
+    else{
+      K[i] = (epsilon-1)*(epsilon-1)/(4*PI*epsilon*(epsilon+1)*sqrt(L*L-4*d*L*cos(theta)+4*d*d));
+    }
     sum=0;
     for(j=0; j<=gridpoints-1; j++){
-      thetap = startingtheta + j*spacing;
-      sum += Integral(theta, thetap)*(sin(thetap)/L + (epsilon-1)*(L-2*d*cos(thetap))*pow(L*L-4*d*L+4*d*d, -1.5)/(epsilon+1));
+      thetap = j*spacing;
+      fullintegral = Integral2(theta, thetap);
+      sum += fullintegral;
     }
-    sum = sum*pow(epsilon-1/(4*PI),2)/(epsilon*sqrt(2))*spacing;
-    K[i] -=sum;
+    sum = sum*spacing*pow((epsilon-1)/(4*PI),2)/(epsilon);
+    K[i] += sum;
   }
 
 }
 
+double Integral2(double thetai, double thetaj){
+  double A, B=0;
+  double argument=0;
+  double integral=0;
+  double Jac=0;
+  double factor1, factor2=0;
+  double tani, tanj=0;
+  double element=0;
+  tani = tan(thetai);
+  tanj = tan(thetaj);
+  if(thetai<startingtheta){
+    if(thetaj<startingtheta){//r'' and R on boundary
+      Jac=tani*d*d/(cos(thetai)*cos(thetai));
+      A = d*d*(tani*tani+tanj*tanj) + delta;
+      B = 2.0*d*tani*tanj;
+      argument = -2*B/(A-B);
+      integral = 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A-B));
+      argument = 2*B/(A+B);
+      integral += 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A+B));
+      integral = integral*Jac*(-2*epsilon*cos(thetaj))/(d*d*(epsilon+1));
+    }
+    else{//r'' on sphere R on boundary
+      Jac=L*L*sin(thetai);
+      A = d*d*tani*tani + d*d -2*d*L*cos(thetaj) + L*L;
+      B = 2*d*L*tani*sin(thetaj);
+      argument = -2*B/(A-B);
+      integral = 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A-B));
+      argument = 2*B/(A+B);
+      integral += 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A+B));
+      integral = integral*Jac*(-1/(L*L) + (epsilon-1)*(2*d*cos(thetaj)-L)/((epsilon+1)*pow(L*L-4*d*L*cos(thetaj)+4*d*d, 1.5)));      
+    }
+  }
+  else{
+    if(thetaj<startingtheta){//r'' on boundary R on sphere
+      Jac=tani*d*d/(cos(thetai)*cos(thetai));
+      A = d*d*tanj*tanj + d*d -2*d*L*cos(thetai) + L*L;
+      B = 2*d*L*tanj*sin(thetai);
+      argument = -2*B/(A-B);
+      integral = 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A-B));
+      argument = 2*B/(A+B);
+      integral += 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A+B));
+      integral = integral*Jac*(-2*epsilon*cos(thetaj))/(d*d*(epsilon+1));
+    }
+    else{// r'' and R on sphere
+      Jac=L*L*sin(thetai);
+      A = 2*L*L - 2*L*L*cos(thetai)*cos(thetaj) + delta;
+      B = 2*L*L*sin(thetai)*sin(thetaj);
+      argument = -2*B/(A-B);
+      integral = 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A-B));
+      argument = 2*B/(A+B);
+      integral += 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A+B));
+      integral = integral*Jac*(-1/(L*L) + (epsilon-1)*(2*d*cos(thetaj)-L)/((epsilon+1)*pow(L*L-4*d*L*cos(thetaj)+4*d*d, 1.5)));
+    }
+  }
+
+}
 
 double Integral(double thetai, double thetaj){
   double A, B=0;
   double argument=0;
   double integral=0;
-  A=1-cos(thetai)*cos(thetaj)+delta;
-  B=sin(thetai)*sin(thetaj);
-  argument = -2*B/(A-B);
-  integral = 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A-B));
-  argument = 2*B/(A+B);
-  integral += 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A+B));
+  double Jac=0;
+  double factor1, factor2=0;
+  double tani, tanj=0;
+  //i corresponds to the double prime coordinate
+  tani = tan(thetai);
+  tanj = tan(thetaj);
+  if(thetai<startingtheta){
+    Jac=tani*d*d/(cos(thetai)*cos(thetai));
+    if(thetaj<startingtheta){//corresponds to r'' and R on interface
+      A = d*d*(pow(tani,2)+pow(tanj,2))+delta;
+      B = 2*d*tani*tanj;
+      factor1 = 4*EllipticE(-2*B/(A-B))/(sqrt(A-B)*(A+B));
+      factor1 = factor1*d*(pow(tani,2)+pow(tanj,2));
+      factor2 = 4*A*(A-B)*EllipticE(-2*B/(A-B));
+      factor2 -= 4*(A*A-B*B)*ellipticK(-2*B/(A-B));
+      factor2 = factor2/(B*(A+B)*pow(A-B,1.5));
+      factor2 = factor2*tan(thetai)*tan(thetaj);
+      integral = factor2 - factor1;
+      integral = integral*Jac;
+    }
+    else{//corresponds to r'' on interface and R on sphere
+      A = pow(d*tani,2) + d*d -2*d*L*cos(thetaj)+L*L + delta;
+      B = 2*d*L*tani*sin(thetaj);
+      factor1 = 4*EllipticE(-2*B/(A-B))/(sqrt(A-B)*(A+B));
+      factor1 = factor1*(d*tani*tani + d - L*cos(thetaj));
+      factor2 = 4*A*(A-B)*EllipticE(-2*B/(A-B));
+      factor2 -= 4*(A*A-B*B)*ellipticK(-2*B/(A-B));
+      factor2 = factor2*L*tani*sin(thetaj);
+      integral = factor2 - factor1;
+      integral = integral*Jac;
+    }
+  }
+  else{
+    Jac=L*L*sin(thetai);
+    if(thetaj<startingtheta){//corresponds to r'' on sphere and R on interface
+      A = pow(d*tanj,2) + d*d - 2*d*L*cos(thetai) + L*L +delta;
+      B = 2*d*L*tanj*sin(thetai);
+      factor1 = 4*EllipticE(-2*B/(A-B))/(sqrt(A-B)*(A+B));
+      factor1 = factor1*(cos(thetai)*d-L);
+      factor2 = 4*A*(A-B)*EllipticE(-2*B/(A-B));
+      factor2 -= 4*(A*A-B*B)*ellipticK(-2*B/(A-B));
+      factor2 = factor2*d*tanj*sin(thetai);
+      integral = factor1 + factor2;
+      integral = integral*Jac;
+    }
+    else{//corresponds to r'' and R on sphere
+      A = 2-2*cos(thetai)*cos(thetaj)+delta;
+      B = 2*sin(thetai)*sin(thetaj);
+      argument = -2*B/(A-B);
+      integral = 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A-B));
+      argument = 2*B/(A+B);
+      integral += 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A+B));
+      integral = integral*(-1/(L*L));
+      integral = integral*Jac;
+      
+    }
+  }
+
   return integral;
 }
 

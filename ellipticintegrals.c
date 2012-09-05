@@ -68,7 +68,7 @@ void computef(){
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral += sin(thetai)*spacing*L*(L-2*d*cos(thetai))/pow(L*L-4*d*L*cos(thetai)+4*d*d,1.5);
+    integral += sin(thetai)*spacing*L*(L-2.0*d*cos(thetai))/pow(L*L-4.0*d*L*cos(thetai)+4.0*d*d,1.5);
   }
   integral = integral*pow(epsilon-1,2)/(8*PI*(epsilon+1));
   fdd -=integral;
@@ -76,7 +76,7 @@ void computef(){
   //printf("%f\n", fdd);
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral += sin(thetai)*spacing/pow(L*L-4*d*L*cos(thetai)+4*d*d,0.5);
+    integral += sin(thetai)*spacing/pow(L*L-4.0*d*L*cos(thetai)+4.0*d*d,0.5);
   }
   integral=integral*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
   fdd += integral;
@@ -125,7 +125,7 @@ void computek(){
     sum=0;
     for(j=0; j<=gridpoints-1; j++){
       thetap = startingtheta + j*spacing;
-      sum += Integral(theta, thetap)*sin(thetap)*(1/L + (epsilon-1)*(L-2*d*cos(thetap))*pow(L*L-4*d*L+4*d*d, -1.5)*L/(epsilon+1));
+      sum += Integral(theta, thetap)*sin(thetap)*(1/L + (epsilon-1)*(L-2*d*cos(thetap))*pow(L*L-4*d*L*cos(thetap)+4*d*d, -1.5)*L/(epsilon+1));
     }
     sum = sum*spacing*pow((epsilon-1)/(4*PI),2)/(epsilon*sqrt(2));
     K[i] -= sum;
