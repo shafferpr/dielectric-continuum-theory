@@ -63,31 +63,48 @@ void computef(){
   double spacing=0;
   double thetai=0;
   double energy=0;
-  spacing=(PI-startingtheta)/gridpoints;
-  fdd = -(pow(epsilon-1,2))/(4*PI*epsilon*L);
+  spacing=PI/gridpoints;
   //printf("%f\n", fdd);
   integral=0;
+
   for(i=0; i<=gridpoints-1; i++){
-    thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral += sin(thetai)*spacing*L*(L-2*d*cos(thetai))/pow(L*L-4*d*L*cos(thetai)+4*d*d,1.5);
+    thetai = spacing*i;
+    if(thetai<startingtheta){
+      integral +=tan(thetai)*2*epsilon/(d*cos(thetai)*(epsilon+1));
+    }
+    else{
+      integral +=sin(thetai)*(1/L + (epsilon-1)/((epsilon+1)*sqrt(L*L-4*d*L*cos(thetai)+4*d*d)));
+    }
   }
-  integral = integral*pow(epsilon-1,2)/(8*PI*(epsilon+1));
+  integral = integral*spacing*(epsilon-1)/(8*PI*epsilon);
   fdd -=integral;
+
+  integral=0;
+  for(i=0; i<=gridpoints-1; i++){
+    thetai = spacing*i;
+    if(thetai<startingtheta){
+      integral -=tan(thetai)*2*epsilon/(d*(epsilon+1));
+    }
+    else{
+      integral -=sin(thetai)*L*(1/(L*L) + (epsilon-1)*(L-2*d*cos(thetai))/((epsilon+1)*pow(L*L-4*d*L*cos(thetai)+4*d*d, 1.5)));
+    }
+  }
+  integral = integral*spacing*(epsilon-1)/(8*PI);
+  fdd +=integral;
+
+
   integral=0;
   //printf("%f\n", fdd);
   for(i=0; i<=gridpoints-1; i++){
-    thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral += sin(thetai)*spacing/pow(L*L-4*d*L*cos(thetai)+4*d*d,0.5);
+    thetai = spacing*i;
+    if(thetai<startingtheta){
+      integral += tan(thetai)*ftheta[i]/cos(thetai);
+    }
+    else{
+      integral += sin(thetai)*spacing*ftheta[i];
+    }
   }
-  integral=integral*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
-  fdd += integral;
-  //printf("%f\n", fdd);
-  integral=0;
-  for(i=0; i<=gridpoints-1; i++){
-    thetai = startingtheta + (3.14159-startingtheta)*i/(gridpoints);
-    integral += sin(thetai)*spacing*ftheta[i];
-  }
-  integral=integral*(epsilon-1)/2;
+  integral=integral*spacgin*(epsilon-1)/2;
   fdd -= integral;
   //printf("%f\n", fdd);
   energy = fdd*epsilon*2*PI/(epsilon-1);
