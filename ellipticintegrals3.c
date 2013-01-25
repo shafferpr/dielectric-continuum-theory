@@ -30,12 +30,13 @@ int main(int argc, char *argv[]){
   sscanf(argv[3], "%d", &gridpoints);
   sscanf(argv[4], "%lf", &delta);
   double spacing=0;
+  double thetai=0;
   computeb();
   computek();
   mat A(gridpoints, gridpoints);
   //startingtheta=0;
   startingtheta=acos(d/L);
-  spacing=(PI-startingtheta)/gridpoints;
+  spacing=PI/gridpoints;
   for(i=0; i<=gridpoints-1; i++){
     for(j=0; j<=gridpoints-1; j++){
       A(i,j)=B[i][j];
@@ -43,12 +44,17 @@ int main(int argc, char *argv[]){
   }
   vec k(gridpoints);
   for(i=0; i<=gridpoints-1; i++){
-    k(i)=K[i];
+    thetai=spacing*i;
+    if(thetai<startingtheta){
+      k(i)=K[i]*(epsilon+1)/(2*epsilon);
+    }
+    else{
+      k(i)=K[i]*2/(epsilon+1);
+    }
   }
   //k.print();
   mat C = inv(A);
   vec f = C*k;
-  f=f*2/(epsilon+1);
   for(i=0; i<=gridpoints-1; i++){
     ftheta[i]=f(i);
   }
@@ -66,45 +72,33 @@ void computef(){
   spacing=PI/gridpoints;
   //printf("%f\n", fdd);
   integral=0;
-
+  
+  fdd=pow(epsilon-1,2)/(8*PI*d*(epsilon+1));
   for(i=0; i<=gridpoints-1; i++){
     thetai = spacing*i;
     if(thetai<startingtheta){
-      integral +=tan(thetai)*2*epsilon/(d*cos(thetai)*(epsilon+1));
+      integral += tan(thetai)*2*epsilon/(d*(epsilon+1));
     }
     else{
       integral +=sin(thetai)*(1/L + (epsilon-1)/((epsilon+1)*sqrt(L*L-4*d*L*cos(thetai)+4*d*d)));
     }
   }
-  integral = integral*spacing*(epsilon-1)/(8*PI*epsilon);
-  fdd -=integral;
-
-  integral=0;
-  for(i=0; i<=gridpoints-1; i++){
-    thetai = spacing*i;
-    if(thetai<startingtheta){
-      integral -=tan(thetai)*2*epsilon/(d*(epsilon+1));
-    }
-    else{
-      integral -=sin(thetai)*L*(1/(L*L) + (epsilon-1)*(L-2*d*cos(thetai))/((epsilon+1)*pow(L*L-4*d*L*cos(thetai)+4*d*d, 1.5)));
-    }
-  }
-  integral = integral*spacing*(epsilon-1)/(8*PI);
-  fdd +=integral;
+  integral = integral*spacing*(epsilon-1)*(epsilon-1)/(8*PI*epsilon);
+  fdd -= integral;
 
   integral=0;
   //printf("%f\n", fdd);
   for(i=0; i<=gridpoints-1; i++){
     thetai = spacing*i;
     if(thetai<startingtheta){
-      integral += tan(thetai)*ftheta[i]/cos(thetai);
+      integral -= tan(thetai)*ftheta[i]*2*epsilon/(cos(thetai)*(epsilon+1));
     }
     else{
-      integral += sin(thetai)*spacing*ftheta[i];
+      integral += sin(thetai)*(-1/L*L + (epsilon-1)*(2*d*cos(theta)-L)/((epsilon+1)*pow(L*L-4*d*L*cos(thetai+4*d*d,1.5)));
     }
   }
   integral = integral*spacing*(epsilon-1)/2;
-  fdd -= integral;
+  fdd += integral;
   //printf("%f\n", fdd);
   energy = fdd*epsilon*2*PI/(epsilon-1);
   printf("%f %f %f %d\n", d, energy, delta, gridpoints);
@@ -125,7 +119,6 @@ void computeb(){
     }
     else{
       prefactor = spacing*(epsilon-1)/(2*PI*(epsilon+1));
-      prefactor = spacing*(epsilon-1)*(epsilon+1)/(8*PI*epsilon);
     }
     for(i=0; i<=gridpoints-1; i++){
       thetai=3.14159*i/gridpoints;
