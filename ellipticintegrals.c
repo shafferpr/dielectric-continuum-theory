@@ -8,11 +8,12 @@ using namespace arma;
 #define PI 3.14159265
 //gcc -O2 -lgsl -lgslcblas shwatermolecule.c -o shwatermolecule
 //g++ -O2 -lgsl -lgslcblas -llapack ellipticintegrals.c -o ellipticint
+//g++ -O2 ellipticintegrals.c -o ellipticint -lgsl -lgslcblas -llapack
 //this file computes solvation energy for d<L(the sphere penetrating the boundary)
 double result=0;
-double B[400][400]={0};
-double K[400]={0};
-double ftheta[400]={0};
+double B[600][600]={0};
+double K[600]={0};
+double ftheta[600]={0};
 double delta=0.01;
 double epsilon=80;
 double L, d=0;
@@ -72,23 +73,24 @@ void computef(){
   }
   integral = integral*pow(epsilon-1,2)/(8*PI*(epsilon+1));
   fdd -=integral;
+  //printf("%f %.12f\n", fdd, integral);
   integral=0;
-  //printf("%f\n", fdd);
+
   for(i=0; i<=gridpoints-1; i++){
     thetai=startingtheta + (3.14159-startingtheta)*i/(gridpoints);
     integral += sin(thetai)*spacing/pow(L*L-4.0*d*L*cos(thetai)+4.0*d*d,0.5);
   }
   integral=integral*pow(epsilon-1,2)/(8*PI*epsilon*(epsilon+1));
   fdd += integral;
-  //printf("%f\n", fdd);
+  //printf("%f %.12f\n", fdd, integral);
   integral=0;
   for(i=0; i<=gridpoints-1; i++){
     thetai = startingtheta + (3.14159-startingtheta)*i/(gridpoints);
     integral += sin(thetai)*spacing*ftheta[i];
   }
   integral=integral*(epsilon-1)/2;
-  fdd -= integral;
-  //printf("%f\n", fdd);
+  //fdd -= integral;
+  printf("%f %.12f\n", fdd, integral);
   energy = fdd*epsilon*2*PI/(epsilon-1);
   printf("%f %f %f %d\n", d, energy, delta, gridpoints);
 }
