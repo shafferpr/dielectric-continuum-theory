@@ -190,6 +190,7 @@ double Integral2(double thetai, double thetaj){
       argument = -2*B/(A-B);
       integral = 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A-B));
       argument = 2*B/(A+B);
+      printf("%f\n", argument);
       integral += 2*gsl_sf_ellint_RF(0, 1-argument, 1, 0.1)/(sqrt(A+B));
       integral = integral*Jac*(-1/(L*L) + (epsilon-1)*(2*d*cos(thetaj)-L)/((epsilon+1)*pow(L*L-4*d*L*cos(thetaj)+4*d*d, 1.5)));      
     }
@@ -218,6 +219,7 @@ double Integral2(double thetai, double thetaj){
   }
   return integral;
 }
+
 
 double Integral(double thetai, double thetaj){
   double A, B=0;
