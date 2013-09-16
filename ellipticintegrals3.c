@@ -24,6 +24,7 @@ void computek();
 void computef();
 double Integral(double, double);
 double Integral2(double, double);
+
 int main(int argc, char *argv[]){
   sscanf(argv[1], "%lf", &L);
   sscanf(argv[2], "%lf", &d);
@@ -43,7 +44,9 @@ int main(int argc, char *argv[]){
       A(i,j)=B[i][j];
     }
   }
+
   vec k(gridpoints);
+
   for(i=0; i<=gridpoints-1; i++){
     thetai=spacing*i;
     if(thetai<startingtheta){

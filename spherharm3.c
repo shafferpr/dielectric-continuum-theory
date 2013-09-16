@@ -54,6 +54,7 @@ int main(int argc, char *argv[]){
     projectontoYLM();
     calculateFLM();
   }
+
   return 0;
 }
 
@@ -123,7 +124,6 @@ void projectontoYLM(){
       YLMAsmallrpneg[l][m] = YLMAsmallrpneg[l][m]*h;
       YLMDsmallrppos[l][m] = YLMDsmallrppos[l][m]*h;
       YLMDsmallrpneg[l][m] = YLMDsmallrpneg[l][m]*h;
-
     }
   }
 
@@ -144,13 +144,42 @@ void calculateFLM(){
   double complex ylmylm=0;
   double plmplm=0;
   double lp21, eps = 0;
+  double dum=0;
   FILE *enptr;
   enptr=fopen(enfile, "a");
   eps=epsilon;
+
   for(l=0; l<=lmax; l++){
     lp21 = 2*l+1;
     ldum=l;
-    for(m=0; m<=l; m++){
+    //printf("%f\n", ldum);
+    dum = (eps-1)*4*PI/(2*depth*(eps+1));
+    flmsurfpos = ((ldum+1)/(pow(lp21,2)))*pow(smallr, l)/pow(radius, l+1);
+    //printf("%f\n", flmsurfpos);
+    flmsurfpos += ((ldum+1)/(lp21*4*PI))*pow(smallr/radius, l)*YLMAbigrpos[l][m];
+    //flmsurfpos += ((ldum+1)/(lp21*4*PI))*pow(smallr/radius, l)*dum;
+    //printf("%f\n", flmsurfpos);
+    flmsurfpos -= YLMDsmallrpos[l][m]*radius/(lp21*4*PI);
+    //printf("%f\n", flmsurfpos);
+    flmsurfpos -= YLMDsmallrpos[l][m]*YLMAbigrpos[l][m]*pow(radius, 2)/(16*PI*PI);
+    //printf("%f\n", flmsurfpos);
+    flmsurfpos = -pow(eps-1, 2)*flmsurfpos/eps;
+    //printf("%f\n", flmsurfpos);
+    denominator = ((eps+1)*ldum + eps)/(lp21) - (eps-1)*YLMDbigrpos[l][m]*radius*radius/(4*PI); //changing this because i think it's wrong 08/30/13
+    //printf("%f\n", denominator);
+    flmsurfpos = flmsurfpos/denominator;
+
+    //printf("flm %d %f %.12f %lf\n", l, depth, creal(YLMAbigrpos[l][m]), dum);
+    FLMpos[l][m] = -((ldum+1)/(pow(lp21, 2)))*pow(smallr*smallrp, l)/pow(radius, 2*l+1);
+    FLMpos[l][m] += pow(smallrp/radius, l)*YLMDsmallrpos[l][m]*radius/(lp21*4*PI);
+    FLMpos[l][m] += pow(radius, 2)*YLMAsmallrppos[l][m]*YLMDsmallrpos[l][m]/(16*PI*PI);
+    FLMpos[l][m] -= ((ldum+1)/(lp21*4*PI))*YLMAsmallrppos[l][m]*pow(smallr/radius, l);
+    //FLMpos[l][m] += pow(radius, 2)*dum*YLMDsmallrpos[l][m]/(16*PI*PI);
+    //FLMpos[l][m] -= ((ldum+1)/(lp21*4*PI))*dum*pow(smallr/radius, l);
+    FLMpos[l][m] = FLMpos[l][m]*pow(eps-1, 2)/eps;
+    FLMpos[l][m] += (eps-1)*flmsurfpos*(pow(radius, 2)*YLMDsmallrppos[l][m]/(4*PI) - pow(smallrp/radius, l)*(ldum+1)/(lp21));
+    printf("flm %d %f %f\n", l, depth, FLMpos[l][m]);
+    for(m=1; m<=l; m++){
       flmsurfpos=0;
       flmsurfneg=0;
       FLMpos[l][m]=0;
@@ -161,7 +190,7 @@ void calculateFLM(){
       flmsurfpos -= YLMDsmallrpos[l][m]*radius/(lp21*4*PI);
       flmsurfpos -= YLMDsmallrpos[l][m]*YLMAbigrpos[l][m]*pow(radius, 2)/(16*PI*PI);
       flmsurfpos = -pow(eps-1, 2)*flmsurfpos/eps;
-      denominator = ((ldum+1)*eps + ldum)/(lp21) - (eps-1)*YLMDbigrpos[l][m]*radius*radius/(4*PI);
+      denominator = ((eps+1)*ldum + eps)/(lp21) - (eps-1)*YLMDbigrpos[l][m]*radius*radius/(4*PI); //changing this because i think it's wrong 08/30/13
       flmsurfpos = flmsurfpos/denominator;
       FLMpos[l][m] = -((ldum+1)/(pow(lp21, 2)))*pow(smallr*smallrp, l)/pow(radius, 2*l+1);
       FLMpos[l][m] += pow(smallrp/radius, l)*YLMDsmallrpos[l][m]*radius/(lp21*4*PI);
@@ -170,14 +199,12 @@ void calculateFLM(){
       FLMpos[l][m] = FLMpos[l][m]*pow(eps-1, 2)/eps;
       FLMpos[l][m] += (eps-1)*flmsurfpos*(pow(radius, 2)*YLMDsmallrppos[l][m]/(4*PI) - pow(smallrp/radius, l)*(ldum+1)/(lp21));
 
-
-
       flmsurfneg = ((ldum+1)/(pow(lp21,2)))*pow(smallr, l)/pow(radius, l+1);
       flmsurfneg += ((ldum+1)/(lp21*4*PI))*pow(smallr/radius, l)*YLMAbigrneg[l][m];
       flmsurfneg -= YLMDsmallrneg[l][m]*radius/(lp21*4*PI);
       flmsurfneg -= YLMDsmallrneg[l][m]*YLMAbigrneg[l][m]*pow(radius, 2)/(16*PI*PI);
       flmsurfneg = -pow(eps-1, 2)*flmsurfneg/eps;
-      denominator = ((ldum+1)*eps + ldum)/(lp21) - (eps-1)*YLMDbigrneg[l][m]*radius*radius/(4*PI);
+      denominator = ((eps+1)*ldum + 1)/(lp21) - (eps-1)*YLMDbigrneg[l][m]*radius*radius/(4*PI);
       flmsurfneg = flmsurfneg/denominator;
       FLMneg[l][m] = -((ldum+1)/(pow(lp21, 2)))*pow(smallr*smallrp, l)/pow(radius, 2*l+1);
       FLMneg[l][m] += pow(smallrp/radius, l)*YLMDsmallrneg[l][m]*radius/(lp21*4*PI);
@@ -185,14 +212,11 @@ void calculateFLM(){
       FLMneg[l][m] -= ((ldum+1)/(lp21*4*PI))*YLMAsmallrpneg[l][m]*pow(smallr/radius, l);
       FLMneg[l][m] = FLMneg[l][m]*pow(eps-1, 2)/eps;
       FLMneg[l][m] += (eps-1)*flmsurfneg*(pow(radius, 2)*YLMDsmallrpneg[l][m]/(4*PI) - pow(smallrp/radius, l)*(ldum+1)/(lp21));
-
-
-
       //printf("%d %d %f %f\n", l, m, creal(FLMpos[l][m]), cimag(FLMpos[l][m]));
       //printf("neg %d %d %f %f\n", l, m, creal(FLMneg[l][m]), cimag(FLMneg[l][m]));
-
     }
   }
+
 
   ffunction[0][0]=0;
   for(l=0; l<=lmax; l++){
@@ -200,7 +224,9 @@ void calculateFLM(){
     plmplm = gsl_sf_legendre_sphPlm(l, 0, cos(thetacoord))*gsl_sf_legendre_sphPlm(l, 0, cos(thetacoord));
     exponentials = cexp(I*phicoord*m)*cexp(-I*phicoord*m);
     ylmylm = exponentials*plmplm;
+    //printf("%f\n", creal(ffunction[0][0]));
     ffunction[0][0] += FLMpos[l][0]*ylmylm;
+    //printf("%f %lf\n", creal(ffunction[0][0]), creal(FLMpos[l][0]));
     for(m=1; m<=l; m++){
        plmplm = gsl_sf_legendre_sphPlm(l, m, cos(thetacoord))*gsl_sf_legendre_sphPlm(l, m, cos(thetacoord));
        exponentials = cexp(I*phicoord*m)*cexp(-I*phicoord*m);
@@ -212,10 +238,9 @@ void calculateFLM(){
        ffunction[0][0] += FLMneg[l][m]*ylmylm;
     }
   }
-
   ffunction[0][0] = ffunction[0][0]*eps*2*PI/(eps-1);
   ffunction[0][0] += (1/(2*depth))*(epsilon-1)/(2*(epsilon+1));
-  printf("energies .. %f %f\n", creal(ffunction[0][0]), depth);
+  //printf("energies ... %f %f\n", creal(ffunction[0][0]), depth);
   fprintf(enptr, "%f %f\n", depth, creal(ffunction[0][0]));
   fclose(enptr);
 }

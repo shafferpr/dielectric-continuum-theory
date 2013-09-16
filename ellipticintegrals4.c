@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
   //f.print();
   for(i=0; i<=gridpoints-1; i++){
     ftheta[i]=f(i);
-    //printf("%lf %lf\n", spacing*i, ftheta[i]);
+    printf("%lf %lf\n", spacing*i, ftheta[i]);
   }
   //check();
   computef();
@@ -122,6 +122,7 @@ void computef(){
       integral += product;
     }
   }
+  //printf("int %f\n", integral*spacing);
   integral = integral*spacing*pow((epsilon-1)/(4*PI),2)/epsilon;
   firstterm = integral;
   fdd += integral;
@@ -145,8 +146,8 @@ void computef(){
   integral = integral*spacing*(epsilon-1)/2;
   fdd += integral;
   //printf("%f\n", fdd);
-  energy = fdd*epsilon*2*PI/(epsilon-1) + (epsilon-1)/(2*d*(epsilon+1));
-  printf("%f %f %f\n", d, energy, firstterm*epsilon*2*PI/(epsilon-1));
+  energy = fdd*epsilon*2*PI/(epsilon-1) + (epsilon-1)/(4*d*(epsilon+1));
+  //printf("%f %f %f\n", d, energy, firstterm*epsilon*2*PI/(epsilon-1));
 
 }
 
@@ -171,10 +172,10 @@ void computeb(){
 	B[i][j]=1;
       }
       //printf("%f %f %f\n", i,j, thetai, thetaj, startingtheta);
-      if(i!=j)
       B[i][j] -= prefactor*Integral(thetai, thetaj);
-
-      //printf("%d %d %f\n", i, j, B[i][j]);
+      //if(j==20){
+	//printf("%f %f %f\n", thetai, B[i][j], sin(thetai)/(gridpoints*2));
+      //}
     }
   }
 
@@ -198,7 +199,6 @@ void computek(){
     }
     sum = sum*spacing*pow((epsilon-1)/(4*PI),2)/(epsilon);
     K[i] = sum;
-    //printf("%f\n", K[i]);
   }
   //printf("a %lf %lf\n", d, fullintegral);
 }
@@ -274,6 +274,7 @@ double Integral2(double thetaj, double thetai){
       integral = integral*Jac;
     }
   }
+
   //if(thetai==0 && thetaj==0)
     //printf("%lf %lf\n", d, integral);
   return integral;
